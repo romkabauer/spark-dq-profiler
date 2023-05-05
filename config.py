@@ -19,5 +19,5 @@ TO_PROFILE = [
     debug_table,  # testing custom columns
     # debug_table_2,  # resource intensive example, testing wide range of columns, performance and full columns pickup
     debug_table_3,  # testing wrong reference to SNF
-    debug_table_4,  # testing wrong config
+    # debug_table_4,  # testing wrong config
 ]
