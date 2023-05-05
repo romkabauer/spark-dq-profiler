@@ -1,26 +1,8 @@
-from exceptions import LackDataForAnalysisError
+from exceptions import LackDataForAnalysisError, UndefinedColumnTypeError
 
 
 class Analyzer:
     def __init__(self, profiling_results: list):
-        a = [
-            {
-                "TABLE_NAME": "EXAMPLE_TABLE_NAME",
-                "TABLE_PROFILING_INFO": {
-                    "COLUMNS": {
-                        "EXAMPLE_COLUMN_NAME": {
-                            "count": 5,
-                            "share": 1.0,
-                            "uniq": 5,
-                            "uniq_upper": 5,
-                            "top_value": "1",
-                            "top_freq": 1,
-                            "top_share": 0.2
-                        },
-                    }
-                }
-            }
-        ]
         self.profiling_results = [x for x in profiling_results if not x.get("ERROR")]
 
     def suggest_constraints(self) -> list[dict]:
@@ -44,8 +26,56 @@ class Analyzer:
         return possible_constraints
 
     def __identify_constraints_for_column(self, col_stat: dict) -> list[dict]:
-        return [{
-            "DESCRIPTION": "EXISTENCE",
-            "BASE_INFORMATION": col_stat,
-            "STATEMENT": "MERGE STATEMENT FOR ADF FRAMEWORK",
-        }]
+        if not col_stat.get("col_type"):
+            raise UndefinedColumnTypeError
+
+        match col_stat["col_type"]:
+            case "NUMERIC":
+                return self.__identify_constraints_for_column_numeric(col_stat)
+            case "TIMESTAMP":
+                return self.__identify_constraints_for_column_timestamp(col_stat)
+            case "TEXT":
+                return self.__identify_constraints_for_column_text(col_stat)
+            case _:
+                return [
+                    {
+                        "DESCRIPTION": "No identified constraints",
+                        "BASE_INFORMATION": col_stat,
+                        "STATEMENT": "No identified constraints",
+                    }
+                ]
+
+    @staticmethod
+    def __identify_constraints_for_column_numeric(col_stat: dict) -> list[dict]:
+        return [
+            {
+                "DESCRIPTION": "Should contain only values from determined list",
+                "BASE_INFORMATION": col_stat,
+                "STATEMENT": "MERGE STATEMENT FOR ADF TESTS",
+            }
+        ]
+
+    @staticmethod
+    def __identify_constraints_for_column_timestamp(col_stat: dict) -> list[dict]:
+        return [
+            {
+                "DESCRIPTION": "Should not contain dates in future",
+                "BASE_INFORMATION": col_stat,
+                "STATEMENT": "MERGE STATEMENT FOR ADF TESTS",
+            }
+        ]
+
+    @staticmethod
+    def __identify_constraints_for_column_text(col_stat: dict) -> list[dict]:
+        return [
+            {
+                "DESCRIPTION": "Catch values with same meaning. but different spelling",
+                "BASE_INFORMATION": col_stat,
+                "STATEMENT": "MERGE STATEMENT FOR ADF TESTS",
+            },
+            {
+                "DESCRIPTION": "Should contain only values from determined list",
+                "BASE_INFORMATION": col_stat,
+                "STATEMENT": "MERGE STATEMENT FOR ADF TESTS",
+            }
+        ]

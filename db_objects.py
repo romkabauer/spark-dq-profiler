@@ -166,6 +166,7 @@ class TableColumn(Table):
     @staticmethod
     def __convert_df_with_numeric_stat_to_dict(df) -> dict:
         return {
+            "col_type": str(df["col_type"][0]),
             "uniq": int(df["uniq"][0]),
             "top_value": str(df["top_value"][0]),
             "top_freq": int(df["top_freq"][0]),
@@ -181,6 +182,7 @@ class TableColumn(Table):
     @staticmethod
     def __convert_df_with_datetime_stat_to_dict(df) -> dict:
         return {
+            "col_type": str(df["col_type"][0]),
             "uniq": int(df["uniq"][0]),
             "top_value": str(df["top_value"][0]),
             "top_freq": int(df["top_freq"][0]),
@@ -196,6 +198,7 @@ class TableColumn(Table):
     @staticmethod
     def __convert_df_with_text_stat_to_dict(df) -> dict:
         return {
+            "col_type": str(df["col_type"][0]),
             "uniq": int(df["uniq"][0]),
             "uniq_upper": int(df["uniq_upper"][0]),
             "top_value": str(df["top_value"][0]),
