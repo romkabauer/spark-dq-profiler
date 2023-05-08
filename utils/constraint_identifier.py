@@ -185,7 +185,7 @@ class ConstraintIdentifier:
            or not self.base_info.get("top_share"):
             return
 
-        if round(self.base_info.get("top_freq") \
+        if round(self.base_info.get("top_freq")
            / (self.base_info.get("count") if self.base_info.get("count") != 0 else 1), 3) \
            == round(self.base_info.get("top_share"), 3):
             self.foreign_key = {
