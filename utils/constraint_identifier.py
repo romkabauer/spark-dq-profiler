@@ -11,9 +11,11 @@ class ConstraintIdentifier:
         self.related_table  = related_table
 
         self.nullability       : dict | None = None
+        self.minmax            : dict | None = None
         self.determined_list   : dict | None = None
         self.inconsistent_names: dict | None = None
         self.future_dates      : dict | None = None
+        self.foreign_key       : dict | None = None
 
     def identify_constraints(self) -> list[dict]:
         return list(
@@ -21,8 +23,11 @@ class ConstraintIdentifier:
                 lambda x: x is not None,
                 [
                     self.nullability,
+                    self.minmax,
                     self.determined_list,
                     self.inconsistent_names,
+                    self.future_dates,
+                    self.foreign_key,
                 ]
             )
         )
@@ -60,12 +65,12 @@ class ConstraintIdentifier:
             }
 
     def identify_min_max_range(self) -> None:
-        if not self.base_info.get("min") and not self.base_info.get("max"):
+        if not self.base_info.get("min") or not self.base_info.get("max"):
             return
 
         if self.base_info.get("min") != self.base_info.get("max") \
            or not (self.base_info.get("min") == 0 and self.base_info.get("max") == 1):
-            self.nullability = {
+            self.minmax = {
                 "DESCRIPTION": "MINMAX: Maybe this column has business-determined validity range",
                 "BASE_INFORMATION": self.base_info,
                 "MERGE_INTO_ADF_FRM": f"""SELECT
@@ -115,7 +120,7 @@ class ConstraintIdentifier:
                 }
 
     def identify_inconsistent_names(self) -> None:
-        if not self.base_info.get("uniq_upper") and not self.base_info.get("uniq"):
+        if not self.base_info.get("uniq_upper") or not self.base_info.get("uniq"):
             return
 
         if self.base_info.get("uniq_upper") != self.base_info.get("uniq"):
@@ -176,14 +181,14 @@ class ConstraintIdentifier:
 
     def identify_foreign_key(self) -> None:
         if not self.base_info.get("count") \
-           and not self.base_info.get("top_freq") \
-           and not self.base_info.get("top_share"):
+           or not self.base_info.get("top_freq") \
+           or not self.base_info.get("top_share"):
             return
 
         if round(self.base_info.get("top_freq") \
            / (self.base_info.get("count") if self.base_info.get("count") != 0 else 1), 3) \
            == round(self.base_info.get("top_share"), 3):
-            self.future_dates = {
+            self.foreign_key = {
                 "DESCRIPTION": "POSSIBLE FOREIGN KEY: Maybe this column is a foreign key and it is worth to check for CONSISTENCY",
                 "BASE_INFORMATION": self.base_info,
             }
