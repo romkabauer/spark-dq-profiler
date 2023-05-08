@@ -1,10 +1,15 @@
-from executor import SnowflakeExecutor
+from utils.executors import SnowflakeExecutor
 
 
 class Table:
-    def __init__(self, schema: str, name: str, columns: list[str] = None):
+    def __init__(self, schema: str, name: str):
         self.schema = schema
         self.name = name
+
+
+class SNFTable(Table):
+    def __init__(self, schema: str, name: str, columns: list[str] = None):
+        super().__init__(schema, name)
         self.columns = columns
 
     async def get_count(self, executor: SnowflakeExecutor) -> dict | None:
@@ -37,7 +42,7 @@ class Table:
         return df["table_columns"][0].split(",")
 
 
-class TableColumn(Table):
+class SNFTableColumn(SNFTable):
     def __init__(self, schema: str, table_name: str, column_name: str):
         super().__init__(schema, table_name)
         self.related_schema = self.schema
