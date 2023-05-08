@@ -180,7 +180,8 @@ class ConstraintIdentifier:
            and not self.base_info.get("top_share"):
             return
 
-        if round(self.base_info.get("top_freq") / self.base_info.get("count"), 3) \
+        if round(self.base_info.get("top_freq") \
+           / (self.base_info.get("count") if self.base_info.get("count") != 0 else 1), 3) \
            == round(self.base_info.get("top_share"), 3):
             self.future_dates = {
                 "DESCRIPTION": "POSSIBLE FOREIGN KEY: Maybe this column is a foreign key and it is worth to check for CONSISTENCY",
