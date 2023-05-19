@@ -1,9 +1,8 @@
+from abc import abstractmethod
+import pandas as pd
 import sqlalchemy.exc
 from snowflake.sqlalchemy import URL
 from sqlalchemy.engine import create_engine
-import pandas as pd
-
-from snf_config import SNF_USER, SNF_PASS, SNF_ORG, SNF_DB, SNF_WH, SNF_ROLE
 
 
 class Singleton(type):
@@ -15,18 +14,17 @@ class Singleton(type):
         return cls._instances[cls]
 
 
-class SnowflakeExecutor(metaclass=Singleton):
-    def __init__(self):
-        self.engine = create_engine(URL(
-            account=SNF_ORG,
-            user=SNF_USER,
-            password=SNF_PASS,
-            database=SNF_DB,
-            warehouse=SNF_WH,
-            role=SNF_ROLE,
-        ))
+class Executor(metaclass=Singleton):
+    @abstractmethod
+    def execute_select(self, *args) -> pd.DataFrame:
+        pass
 
-    async def execute_select(self, sql: str):
+
+class SnowflakeExecutor(Executor):
+    def __init__(self, snf_config: dict):
+        self.engine = create_engine(URL(**snf_config))
+
+    async def execute_select(self, sql: str) -> pd.DataFrame:
         try:
             df = pd.read_sql_query(sql, self.engine)
         except sqlalchemy.exc.ProgrammingError as e:
@@ -35,3 +33,8 @@ class SnowflakeExecutor(metaclass=Singleton):
 
     def shutdown(self):
         self.engine.dispose()
+
+
+class CSVExecutor(Executor):
+    def execute_select(self, *args) -> pd.DataFrame:
+        pass

@@ -1,10 +1,17 @@
-from executor import SnowflakeExecutor
+import pandas as pd
+
+from utils.executors import SnowflakeExecutor
 
 
 class Table:
-    def __init__(self, schema: str, name: str, columns: list[str] = None):
+    def __init__(self, schema: str, name: str):
         self.schema = schema
         self.name = name
+
+
+class SNFTable(Table):
+    def __init__(self, schema: str, name: str, columns: list[str] = None):
+        super().__init__(schema, name)
         self.columns = columns
 
     async def get_count(self, executor: SnowflakeExecutor) -> dict | None:
@@ -37,7 +44,7 @@ class Table:
         return df["table_columns"][0].split(",")
 
 
-class TableColumn(Table):
+class SNFTableColumn(SNFTable):
     def __init__(self, schema: str, table_name: str, column_name: str):
         super().__init__(schema, table_name)
         self.related_schema = self.schema
@@ -47,7 +54,7 @@ class TableColumn(Table):
     async def get_count(self, executor: SnowflakeExecutor) -> dict:
         sql = f"""SELECT
                     COUNT({self.column_name}) as cnt,
-                    COUNT({self.column_name})/COUNT(*) as share
+                    COUNT({self.column_name})/iff(COUNT(*)=0, 1, COUNT(*)) as share
                 FROM {self.related_schema}.{self.related_table}"""
         df = await executor.execute_select(sql)
         return {
@@ -85,13 +92,22 @@ class TableColumn(Table):
                     END;
                     $$;"""
         df = await executor.execute_select(sql)
-        match df["col_type"][0]:
+        match "EMPTY" if df.empty else df["col_type"][0]:
             case "NUMERIC":
                 return self.__convert_df_with_numeric_stat_to_dict(df)
             case "TIMESTAMP":
                 return self.__convert_df_with_datetime_stat_to_dict(df)
-            case _:
+            case "TEXT":
                 return self.__convert_df_with_text_stat_to_dict(df)
+            case _:
+                return {
+                    "col_type": "EMPTY_COLUMN",
+                    "uniq": 0,
+                    "uniq_upper": 0,
+                    "top_value": "NULL",
+                    "top_freq": 0,
+                    "top_share": 0,
+                }
 
     def __build_script_for_numeric_column_stat_collection(self) -> str:
         return f"""SELECT
@@ -166,6 +182,7 @@ class TableColumn(Table):
     @staticmethod
     def __convert_df_with_numeric_stat_to_dict(df) -> dict:
         return {
+            "col_type": str(df["col_type"][0]),
             "uniq": int(df["uniq"][0]),
             "top_value": str(df["top_value"][0]),
             "top_freq": int(df["top_freq"][0]),
@@ -181,6 +198,7 @@ class TableColumn(Table):
     @staticmethod
     def __convert_df_with_datetime_stat_to_dict(df) -> dict:
         return {
+            "col_type": str(df["col_type"][0]),
             "uniq": int(df["uniq"][0]),
             "top_value": str(df["top_value"][0]),
             "top_freq": int(df["top_freq"][0]),
@@ -196,6 +214,7 @@ class TableColumn(Table):
     @staticmethod
     def __convert_df_with_text_stat_to_dict(df) -> dict:
         return {
+            "col_type": str(df["col_type"][0]),
             "uniq": int(df["uniq"][0]),
             "uniq_upper": int(df["uniq_upper"][0]),
             "top_value": str(df["top_value"][0]),
