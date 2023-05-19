@@ -65,11 +65,12 @@ class ConstraintIdentifier:
             }
 
     def identify_min_max_range(self) -> None:
-        if not self.base_info.get("min") or not self.base_info.get("max"):
+        if not self.base_info.get("min") or not self.base_info.get("max") or not self.base_info.get("uniq"):
             return
 
         if self.base_info.get("min") != self.base_info.get("max") \
-           or not (self.base_info.get("min") == 0 and self.base_info.get("max") == 1):
+           and not (self.base_info.get("min") == 0 and self.base_info.get("max") == 1)\
+           and self.base_info.get("uniq") > 2:
             self.minmax = {
                 "DESCRIPTION": "MINMAX: Maybe this column has business-determined validity range",
                 "BASE_INFORMATION": self.base_info,

@@ -1,3 +1,5 @@
+import pandas as pd
+
 from utils.executors import SnowflakeExecutor
 
 
@@ -52,7 +54,7 @@ class SNFTableColumn(SNFTable):
     async def get_count(self, executor: SnowflakeExecutor) -> dict:
         sql = f"""SELECT
                     COUNT({self.column_name}) as cnt,
-                    COUNT({self.column_name})/COUNT(*) as share
+                    COUNT({self.column_name})/iff(COUNT(*)=0, 1, COUNT({self.column_name})) as share
                 FROM {self.related_schema}.{self.related_table}"""
         df = await executor.execute_select(sql)
         return {
@@ -90,13 +92,22 @@ class SNFTableColumn(SNFTable):
                     END;
                     $$;"""
         df = await executor.execute_select(sql)
-        match df["col_type"][0]:
+        match "EMPTY" if df.empty else df["col_type"][0]:
             case "NUMERIC":
                 return self.__convert_df_with_numeric_stat_to_dict(df)
             case "TIMESTAMP":
                 return self.__convert_df_with_datetime_stat_to_dict(df)
-            case _:
+            case "TEXT":
                 return self.__convert_df_with_text_stat_to_dict(df)
+            case _:
+                return {
+                    "col_type": "EMPTY_COLUMN",
+                    "uniq": 0,
+                    "uniq_upper": 0,
+                    "top_value": "NULL",
+                    "top_freq": 0,
+                    "top_share": 0,
+                }
 
     def __build_script_for_numeric_column_stat_collection(self) -> str:
         return f"""SELECT
