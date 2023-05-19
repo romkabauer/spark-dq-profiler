@@ -54,7 +54,7 @@ class SNFTableColumn(SNFTable):
     async def get_count(self, executor: SnowflakeExecutor) -> dict:
         sql = f"""SELECT
                     COUNT({self.column_name}) as cnt,
-                    COUNT({self.column_name})/iff(COUNT(*)=0, 1, COUNT({self.column_name})) as share
+                    COUNT({self.column_name})/iff(COUNT(*)=0, 1, COUNT(*)) as share
                 FROM {self.related_schema}.{self.related_table}"""
         df = await executor.execute_select(sql)
         return {
