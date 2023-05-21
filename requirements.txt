@@ -1,2 +1,7 @@
 SQLAlchemy==1.4.48
 pandas==2.0.1
+pandasql==0.7.3
+asyncio==3.4.3
+python-dateutil==2.8.2
+numpyencoder==0.3.0
+pytz==2023.3

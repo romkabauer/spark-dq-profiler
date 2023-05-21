@@ -1,16 +1,21 @@
-from helpers.table_types import TableType
+from helpers.object_types import TableType
 
 
 class IncorrectConfigError(Exception):
     def __init__(self, message: str = None):
-        super().__init__("""Config lacks 'schema', 'name' or both keys for the table to profile.
+        super().__init__("""Config lacks 'schema', 'name' or 'path' keys for the table to profile.
                          Example of config:
                          [
                             {
                                 "datasource_type": "SNF",
                                 "schema": "UKI_DTM_SNU",
                                 "name": "DIM_CUSTOMER",
-                            }
+                            },
+                            {
+                                "datasource_type": "CSV",
+                                "path": "some/path/file_name.csv",
+                                "name": "DIM_CUSTOMER",
+                            },
                          ]""")
 
 
@@ -68,3 +73,9 @@ class UndefinedColumnTypeError(Exception):
                             "top_freq": 1,
                             "top_share": 0.2
                          }""")
+
+
+class UndefinedDataFrameError(Exception):
+    def __init__(self, message: str = None):
+        super().__init__("""CSVExecutor.execute_select method cannot operate without pandas.DataFrame defined
+        within 'df_table' argument""")
