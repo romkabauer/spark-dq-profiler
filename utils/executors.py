@@ -1,8 +1,11 @@
 from abc import abstractmethod
 import pandas as pd
+from pandasql import sqldf
 import sqlalchemy.exc
 from snowflake.sqlalchemy import URL
 from sqlalchemy.engine import create_engine
+
+from helpers.exceptions import UndefinedDataFrameError
 
 
 class Singleton(type):
@@ -16,7 +19,7 @@ class Singleton(type):
 
 class Executor(metaclass=Singleton):
     @abstractmethod
-    def execute_select(self, *args) -> pd.DataFrame:
+    def execute_select(self, sql: str, **kwargs) -> pd.DataFrame:
         pass
 
 
@@ -24,7 +27,7 @@ class SnowflakeExecutor(Executor):
     def __init__(self, snf_config: dict):
         self.engine = create_engine(URL(**snf_config))
 
-    async def execute_select(self, sql: str) -> pd.DataFrame:
+    async def execute_select(self, sql: str, **kwargs) -> pd.DataFrame:
         try:
             df = pd.read_sql_query(sql, self.engine)
         except sqlalchemy.exc.ProgrammingError as e:
@@ -36,5 +39,12 @@ class SnowflakeExecutor(Executor):
 
 
 class CSVExecutor(Executor):
-    def execute_select(self, *args) -> pd.DataFrame:
-        pass
+    async def execute_select(self, sql: str, **kwargs) -> pd.DataFrame:
+        try:
+            df_table = kwargs["df_table"]
+            df = sqldf(sql, locals())
+        except KeyError:
+            raise UndefinedDataFrameError
+        except Exception as e:
+            df = pd.DataFrame([e, sql])
+        return df

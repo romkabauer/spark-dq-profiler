@@ -1,10 +1,13 @@
 from abc import abstractmethod
 import asyncio
 
+import pandas as pd
+import dateutil.parser
+
 from config.snf_config import SNF_CONFIG
 from utils.executors import SnowflakeExecutor, CSVExecutor
-from helpers.table_types import TableType
-from helpers.db_objects import SNFTable, SNFTableColumn
+from helpers.object_types import TableType, ColumnType
+from helpers.db_objects import SNFTable, SNFTableColumn, CSVTableColumn
 from helpers.exceptions import IncorrectConfigError, UnexpectedTableType
 
 
@@ -86,10 +89,70 @@ class SNFProfiler(Profiler):
 
 
 class CSVProfiler(Profiler):
-    def __init__(self, table_config: list[dict], executor: SnowflakeExecutor | CSVExecutor = None):
+    def __init__(self,
+                 table_config: list[dict],
+                 separator: str = ',',
+                 executor: SnowflakeExecutor | CSVExecutor = CSVExecutor()):
         super().__init__(table_config=table_config,
-                         executor=CSVExecutor())
+                         executor=executor)
         self.supported_datasource_type = "CSV"
+        self.separator = separator
 
     async def get_tables_descriptions(self):
-        return []
+        tables_to_profile = []
+
+        for table_info in self.table_config:
+            if not table_info.get("datasource_type") == TableType.CSV.value:
+                raise UnexpectedTableType(TableType.CSV.value)
+            if not table_info.get("path"):
+                raise IncorrectConfigError()
+
+            table = pd.read_csv(table_info.get("path"),
+                                sep=self.separator)
+            table.name = table_info.get("name")
+            tables_to_profile.append(table)
+
+        tables_description = [self.__describe_table(tbl, tbl.name) for tbl in tables_to_profile]
+        return await asyncio.gather(*tables_description)
+
+    async def __describe_table(self, table: pd.DataFrame, table_name: str = None):
+        if table.empty:
+            return {
+                "ERROR": "Empty dataframe",
+            }
+
+        table_description = {
+            "TABLE_NAME": f"{table_name}",
+            "TABLE_PROFILING_INFO": {
+                "TABLE_COUNT": table.shape[0],
+                "COLUMNS": {},
+            }
+        }
+        table_description_info = table.describe(include='all')
+        for col in table.columns:
+            col_type = ColumnType.TEXT.value
+
+            try:
+                dateutil.parser.parse(str(table[col][0]))
+                col_type = ColumnType.TIMESTAMP.value
+            except ValueError:
+                pass
+
+            if any(dtype in str(table_description_info[col].dtype) for dtype in ["float", "int"]):
+                col_type = ColumnType.NUMERIC.value
+
+            table_description["TABLE_PROFILING_INFO"]["COLUMNS"][col] = await self.__collect_column_stat(CSVTableColumn(
+                configured_table_name=table_name,
+                column_name=col,
+                df_table=table,
+                col_type=col_type))
+
+        return table_description
+
+    async def __collect_column_stat(self, column: CSVTableColumn) -> dict:
+        common_stat = await column.get_count(self.executor)
+        quantitative_stat = await column.calc_column_stat(self.executor)
+        return {
+            **common_stat,
+            **quantitative_stat
+        }

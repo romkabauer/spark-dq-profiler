@@ -1,9 +1,12 @@
 import itertools
 from asyncio import run, gather
+from numpyencoder import NumpyEncoder
 import json
 import time
 
-from config.config import TO_PROFILE
+from config.config import TO_PROFILE, FLAG_PRINT_PROFILING_STAT, \
+    FLAG_SUGGEST_MERGE_STATEMENT_FOR_ADF_FRAMEWORK, CONSTRAINT_IDENTIFICATION_RULES, \
+    CSV_SEPARATOR
 from utils.profilers import Profiler, SNFProfiler, CSVProfiler
 from utils.analyzer import Analyzer
 
@@ -25,7 +28,7 @@ if __name__ == '__main__':
     ts = time.time()
     available_profilers = {
         "SNF": SNFProfiler([]),
-        "CSV": CSVProfiler([])
+        "CSV": CSVProfiler([], separator=CSV_SEPARATOR)
     }
 
     for datasource_type, tables in itertools.groupby(TO_PROFILE, lambda x: x["datasource_type"]):
@@ -37,8 +40,11 @@ if __name__ == '__main__':
     if available_profilers.get("SNF"):
         available_profilers["SNF"].executor.shutdown()
 
-    print(json.dumps(profilers_results, indent=4))
+    if FLAG_PRINT_PROFILING_STAT:
+        print(json.dumps(profilers_results, indent=4, cls=NumpyEncoder))
     print(f"Profiling took: {time.time() - ts} sec.\n\n")
 
-    analyzer = Analyzer(profilers_results)
-    print(json.dumps(analyzer.suggest_constraints(), indent=4))
+    analyzer = Analyzer(profiling_results=profilers_results,
+                        constraint_identification_rules=CONSTRAINT_IDENTIFICATION_RULES,
+                        add_adf_framework_template=FLAG_SUGGEST_MERGE_STATEMENT_FOR_ADF_FRAMEWORK)
+    print(json.dumps(analyzer.suggest_constraints(), indent=4, cls=NumpyEncoder))
