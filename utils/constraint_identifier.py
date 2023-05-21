@@ -3,8 +3,6 @@ import dateutil.parser
 from pytz import UTC
 from functools import reduce
 
-from config.config import FLAG_SUGGEST_MERGE_STATEMENT_FOR_ADF_FRAMEWORK
-
 
 class ConstraintIdentifier:
     def __init__(self,

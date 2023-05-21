@@ -18,7 +18,7 @@ class Analyzer:
 
     @profiling_results.setter
     def profiling_results(self, profiling_results: list):
-        self.__init__(profiling_results)
+        self.__init__(profiling_results, self.constraint_identification_rules)
 
     def suggest_constraints(self) -> list[dict]:
         suggested_constraints = []
