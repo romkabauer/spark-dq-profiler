@@ -323,7 +323,7 @@ class SNFTableColumn(TableColumn):
                     '{ColumnType.TEXT.value}' as col_type,
                     COUNT(DISTINCT {self.column_name}) OVER() as uniq,
                     COUNT(DISTINCT UPPER({self.column_name})) OVER() as uniq_upper,
-                    COALESCE({self.column_name}, 'NULL') as top_value,
+                    COALESCE({self.column_name}::varchar, 'NULL') as top_value,
                     COUNT(*) as top_freq,
                     COUNT(*) / (SELECT COUNT(*) FROM {schema}{self.related_table}) as top_share
                 FROM

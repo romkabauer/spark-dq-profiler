@@ -35,11 +35,13 @@ class Analyzer:
             for col_name, col_stat in table["TABLE_PROFILING_INFO"]["COLUMNS"].items():
                 if col_stat.get("ERROR"):
                     suggestions_for_table["SUGGESTED_CONSTRAINTS"][col_name] = {
+                        "TABLE_NAME": table.get("TABLE_NAME"),
                         "POSSIBLE_CONSTRAINTS": [],
                         "BASE_INFO": col_stat,
                     }
                 else:
                     suggestions_for_table["SUGGESTED_CONSTRAINTS"][col_name] = {
+                        "TABLE_NAME": table.get("TABLE_NAME"),
                         "POSSIBLE_CONSTRAINTS": self.__identify_constraints_for_column(col_stat=col_stat,
                                                                                        col_name=col_name,
                                                                                        tbl_name=table.get("TABLE_NAME")),
