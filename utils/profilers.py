@@ -56,7 +56,16 @@ class SNFProfiler(Profiler):
         table_cnt_info = await table.get_count(self.executor)
 
         if not table_cnt_info:
-            return {}
+            return {
+                "TABLE_NAME": f"{table.name}",
+                "TABLE_PROFILING_INFO": {
+                    "COLUMNS": {
+                        "ERROR": {
+                            "ERROR": "EMPTY TABLE",
+                        }
+                    }
+                }
+            }
         elif table_cnt_info.get("ERROR"):
             return table_cnt_info
 

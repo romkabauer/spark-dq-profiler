@@ -203,6 +203,8 @@ class SNFTable(Table):
                 "ERROR": str(df[0][0]),
                 "STATEMENT_WAS_TIRED_TO_EXECUTE": str(df[0][1]),
             }
+        elif df["cnt"][0] == 0:
+            return {}
         return {
             "TABLE_COUNT": int(df["cnt"][0]),
         }
