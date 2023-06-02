@@ -206,7 +206,6 @@ class SNFTable(Table):
         elif df["cnt"][0] == 0:
             return {
                 "ERROR": "EMPTY_TABLE",
-                "STATEMENT_EXECUTED": str(df[0][1]),
             }
         return {
             "TABLE_COUNT": int(df["cnt"][0]),
