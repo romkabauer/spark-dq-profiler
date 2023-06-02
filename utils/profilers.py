@@ -56,16 +56,7 @@ class SNFProfiler(Profiler):
         table_cnt_info = await table.get_count(self.executor)
 
         if not table_cnt_info:
-            return {
-                "TABLE_NAME": f"{table.name}",
-                "TABLE_PROFILING_INFO": {
-                    "COLUMNS": {
-                        "ERROR": {
-                            "ERROR": "EMPTY TABLE",
-                        }
-                    }
-                }
-            }
+            return {}
         elif table_cnt_info.get("ERROR"):
             return table_cnt_info
 
@@ -76,10 +67,7 @@ class SNFProfiler(Profiler):
                 "COLUMNS": {}
             }
         }
-        columns_to_describe = columns
-
-        if not columns:
-            columns_to_describe = await table.get_columns_list(self.executor)
+        columns_to_describe = columns if columns else await table.get_columns_list(self.executor)
 
         for col in columns_to_describe:
             table_description["TABLE_PROFILING_INFO"]["COLUMNS"][col] = await self.__collect_column_stat(SNFTableColumn(
