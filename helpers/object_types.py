@@ -3,11 +3,11 @@ from enum import Enum
 
 class TableType(Enum):
     SNF = "SNF"
-    CSV = "CSV"
+    SPARK = "SPARK"
 
     @staticmethod
     def list_possible_types():
-        return [TableType.SNF.value, TableType.CSV.value]
+        return [TableType.SNF.value, TableType.SPARK.value]
 
 
 class ColumnType(Enum):

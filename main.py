@@ -7,7 +7,7 @@ import time
 from config.config import TO_PROFILE, FLAG_PRINT_PROFILING_STAT, \
     FLAG_SUGGEST_MERGE_STATEMENT_FOR_ADF_FRAMEWORK, CONSTRAINT_IDENTIFICATION_RULES, \
     CSV_SEPARATOR
-from utils.profilers import Profiler, SNFProfiler, CSVProfiler
+from utils.profilers import Profiler, SNFProfiler, SparkProfiler
 from utils.analyzer import Analyzer
 
 
@@ -28,10 +28,12 @@ if __name__ == '__main__':
     ts = time.time()
     available_profilers = {
         "SNF": SNFProfiler([]),
-        "CSV": CSVProfiler([], separator=CSV_SEPARATOR)
+        "SPARK": SparkProfiler([], csv_separator=CSV_SEPARATOR)
     }
 
-    for datasource_type, tables in itertools.groupby(TO_PROFILE, lambda x: x["datasource_type"]):
+    for datasource_type, tables in itertools.groupby(TO_PROFILE, lambda x: x.get("datasource_type")
+                                                                           if x.get("datasource_type")
+                                                                           else "SPARK"):
         if available_profilers.get(datasource_type):
             available_profilers[datasource_type].table_config = list(tables)
 

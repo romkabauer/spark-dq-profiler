@@ -56,21 +56,45 @@ debug_table_4 = {
     "2": "",
 }
 csv_debug_table_1 = {
-    "datasource_type": "CSV",
-    "path": "/Users/roman_bauer/Downloads/IQVIA_OLP_SALES_TRAN.csv",
+    "path": "data/IQVIA_OLP_SALES_TRAN.csv",
     "name": "IQVIA_OLP_SALES_TRAN",
 }
 csv_debug_table_2 = {
-    "datasource_type": "CSV",
-    "path": "/Users/roman_bauer/Downloads/EMPTY_TABLE.csv",
+    "path": "data/EMPTY_TABLE.csv",
     "name": "EMPTY_TABLE",
+}
+SN_PPA_PRESCRIBING_TRAN = {
+    "datasource_type": "SNF",
+    "schema": "UKI_DWH_SNU",
+    "name": "SN_PPA_PRESCRIBING_TRAN",
+}
+SN_PPA_PRACTICE_CUST_DIM = {
+    "datasource_type": "SNF",
+    "schema": "UKI_DWH_SNU",
+    "name": "SN_PPA_PRACTICE_CUST_DIM",
+}
+DIM_PRODUCT_PPA = {
+    "datasource_type": "SNF",
+    "schema": "UKI_DTM_SNU",
+    "name": "DIM_PRODUCT_PPA",
+    "columns": ["PPA_PART_CODE", "PPA_PART_DESCRIPTION"],
+}
+FACT_PPA_PRESCRIBING = {
+    "datasource_type": "SNF",
+    "schema": "UKI_DTM_SNU",
+    "name": "FACT_PPA_PRESCRIBING",
+    "columns": ["MONTH_ID", "CUSTOMER_ID", "PPA_PRODUCT_ID", "GEOGRAPHY_ID", "ITEMS", "NIC", "NIC_EUR", "ACTUAL_COST", "QUANTITY", "QUANTITY_CALCULATED", "SRC_COUNTRY"]
 }
 
 TO_PROFILE = [
-    debug_table,      # testing custom columns
+    # debug_table,      # testing custom columns
     # debug_table_2,  # resource intensive example, testing wide range of columns, performance and full columns pickup
     # debug_table_3,    # testing wrong reference to SNF
     # debug_table_4,  # testing wrong config
-    csv_debug_table_1,    # testing CSVProfiler - non-empty table
-    csv_debug_table_2,    # testing CSVProfiler - empty table
+    csv_debug_table_1,    # testing SparkProfiler - non-empty csv table
+    csv_debug_table_2,    # testing SparkProfiler - empty csv table
+    # SN_PPA_PRESCRIBING_TRAN,
+    # SN_PPA_PRACTICE_CUST_DIM,
+    DIM_PRODUCT_PPA,
+    # FACT_PPA_PRESCRIBING,
 ]
