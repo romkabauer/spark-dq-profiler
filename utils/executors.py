@@ -32,7 +32,7 @@ class SnowflakeExecutor(Executor):
         try:
             df = pd.read_sql_query(sql, self.engine)
         except sqlalchemy.exc.ProgrammingError as e:
-            df = pd.DataFrame([e.args[0], e.statement])
+            df = pd.DataFrame([{'error': e.args[0], 'statement': e.statement}])
         df = self.spark_session.createDataFrame(df)
         return df
 

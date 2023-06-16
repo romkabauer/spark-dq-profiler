@@ -215,12 +215,14 @@ class SNFTable(Table):
                 FROM {self.schema}.{self.name}"""
         df = await executor.execute_select(sql)
         if "cnt" not in df.columns:
+            print(df.head())
             return {
                 "ERROR": str(df.head()[0]),
                 "STATEMENT_WAS_TIRED_TO_EXECUTE": str(df.head()[1]),
             }
         elif df.head()["cnt"] == 0:
             return {
+                "TABLE_NAME": self.name,
                 "ERROR": "EMPTY_TABLE",
             }
         return {
@@ -277,6 +279,16 @@ class SNFTableColumn(TableColumn):
                     END;
                     $$;"""
         df = await executor.execute_select(sql)
+        if "error" in df.columns:
+            return {
+                "ERROR": df.head()["error"],
+                "col_type": self.col_type,
+                "uniq": 0,
+                "uniq_upper": 0,
+                "top_value": "NULL",
+                "top_freq": 0,
+                "top_share": 0,
+            }
         return self.convert_df_stat_to_dict(df, df.head()["col_type"])
 
     def build_script_for_numeric_column_stat_collection(self) -> str:

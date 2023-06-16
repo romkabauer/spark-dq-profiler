@@ -3,12 +3,14 @@ from asyncio import run, gather
 from numpyencoder import NumpyEncoder
 import json
 import time
+import os
 
 from config.config import TO_PROFILE, FLAG_PRINT_PROFILING_STAT, \
     FLAG_SUGGEST_MERGE_STATEMENT_FOR_ADF_FRAMEWORK, CONSTRAINT_IDENTIFICATION_RULES, \
-    CSV_SEPARATOR
+    CSV_SEPARATOR, WRITE_TO_FILE, ANALYSIS_OUTPUT_FILE_PATH, PROFILING_OUTPUT_FILE_PATH
 from utils.profilers import Profiler, SNFProfiler, SparkProfiler
 from utils.analyzer import Analyzer
+from helpers.results_printing import print_results
 
 
 async def gather_profiling_results(*profilers: Profiler) -> list:
@@ -26,6 +28,11 @@ async def gather_profiling_results(*profilers: Profiler) -> list:
 
 if __name__ == '__main__':
     ts = time.time()
+    for old_out_files in os.listdir(os.curdir):
+        if old_out_files == f'{ANALYSIS_OUTPUT_FILE_PATH}' or \
+           old_out_files == f'{PROFILING_OUTPUT_FILE_PATH}':
+            os.remove(old_out_files)
+
     available_profilers = {
         "SNF": SNFProfiler([]),
         "SPARK": SparkProfiler([], csv_separator=CSV_SEPARATOR)
@@ -42,11 +49,19 @@ if __name__ == '__main__':
     if available_profilers.get("SNF"):
         available_profilers["SNF"].executor.shutdown()
 
-    if FLAG_PRINT_PROFILING_STAT:
-        print(json.dumps(profilers_results, indent=4, cls=NumpyEncoder))
     print(f"Profiling took: {time.time() - ts} sec.\n\n")
 
     analyzer = Analyzer(profiling_results=profilers_results,
                         constraint_identification_rules=CONSTRAINT_IDENTIFICATION_RULES,
                         add_adf_framework_template=FLAG_SUGGEST_MERGE_STATEMENT_FOR_ADF_FRAMEWORK)
-    print(json.dumps(analyzer.suggest_constraints(), indent=4, cls=NumpyEncoder))
+
+    if FLAG_PRINT_PROFILING_STAT:
+        print(json.dumps(profilers_results, indent=4, cls=NumpyEncoder))
+    if WRITE_TO_FILE:
+        print_results(json.dumps(profilers_results, indent=4, cls=NumpyEncoder),
+                      output_file_path=PROFILING_OUTPUT_FILE_PATH)
+        print_results(json.dumps(analyzer.suggest_constraints(), indent=4, cls=NumpyEncoder),
+                      output_file_path=ANALYSIS_OUTPUT_FILE_PATH)
+        print(f"Constraint suggestions are available at '{ANALYSIS_OUTPUT_FILE_PATH}'")
+    else:
+        print(json.dumps(analyzer.suggest_constraints(), indent=4, cls=NumpyEncoder))
