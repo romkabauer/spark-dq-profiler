@@ -59,14 +59,16 @@ debug_table_4 = {
     "2": "",
 }
 csv_debug_table_1 = {
-    "datasource_type": "CSV",
     "path": "data/IQVIA_OLP_SALES_TRAN.csv",
     "name": "IQVIA_OLP_SALES_TRAN",
 }
 csv_debug_table_2 = {
-    "datasource_type": "CSV",
     "path": "data/EMPTY_TABLE.csv",
     "name": "EMPTY_TABLE",
+}
+parquet_debug_table_1 = {
+    "path": "data/IQVIA_OLP_SALES_TRAN.parquet",
+    "name": "IQVIA_OLP_SALES_TRAN",
 }
 
 TO_PROFILE = [
@@ -74,6 +76,7 @@ TO_PROFILE = [
     # debug_table_2,  # resource intensive example, testing wide range of columns, performance and full columns pickup
     # debug_table_3,    # testing wrong reference to SNF
     # debug_table_4,  # testing wrong config
-    csv_debug_table_1,    # testing CSVProfiler - non-empty table
-    csv_debug_table_2,    # testing CSVProfiler - empty table
+    csv_debug_table_1,    # testing SparkProfiler - non-empty table
+    csv_debug_table_2,    # testing SparkProfiler - empty table
+    parquet_debug_table_1, #testing SparkProfiler parquet file - non-empty table 
 ]
