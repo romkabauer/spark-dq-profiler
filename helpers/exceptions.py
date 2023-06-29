@@ -26,7 +26,7 @@ class UnexpectedTableType(Exception):
                              [
                                 {{
                                     "datasource_type": "{expected_type}",
-                                    "schema": "UKI_DTM_SNU",
+                                    "path": "data/UKI_DTM_SNU.csv",
                                     "name": "DIM_CUSTOMER",
                                 }}
                              ]""")

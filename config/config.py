@@ -1,7 +1,10 @@
 from helpers.object_types import ColumnType
 
 FLAG_PRINT_PROFILING_STAT = False
-FLAG_SUGGEST_MERGE_STATEMENT_FOR_ADF_FRAMEWORK = True
+WRITE_TO_FILE = True
+PROFILING_OUTPUT_FILE_PATH = 'profiling_results.txt'
+ANALYSIS_OUTPUT_FILE_PATH = 'constraints_suggestions.txt'
+FLAG_SUGGEST_MERGE_STATEMENT_FOR_ADF_FRAMEWORK = False
 
 CSV_SEPARATOR = ','
 
@@ -57,12 +60,12 @@ debug_table_4 = {
 }
 csv_debug_table_1 = {
     "datasource_type": "CSV",
-    "path": "/Users/roman_bauer/Downloads/IQVIA_OLP_SALES_TRAN.csv",
+    "path": "data/IQVIA_OLP_SALES_TRAN.csv",
     "name": "IQVIA_OLP_SALES_TRAN",
 }
 csv_debug_table_2 = {
     "datasource_type": "CSV",
-    "path": "/Users/roman_bauer/Downloads/EMPTY_TABLE.csv",
+    "path": "data/EMPTY_TABLE.csv",
     "name": "EMPTY_TABLE",
 }
 

@@ -1,6 +1,6 @@
-import pandas as pd
+from pyspark.sql import DataFrame
 
-from utils.executors import Executor, SnowflakeExecutor, CSVExecutor
+from utils.executors import Executor, SnowflakeExecutor, SparkExecutor
 from helpers.object_types import ColumnType
 
 
@@ -29,13 +29,29 @@ class TableColumn(Table):
         df = await executor.execute_select(sql, df_table=self.df_table)
         if "cnt" not in df.columns:
             return {
-                "ERROR": str(df[0][0]),
-                "STATEMENT_WAS_TIRED_TO_EXECUTE": str(df[0][1]),
+                "ERROR": str(df.head()[0]),
+                "STATEMENT_WAS_TIRED_TO_EXECUTE": str(df.head()[1]),
             }
         return {
-            "count": int(df["cnt"][0]),
-            "share": float(df["share"][0]),
+            "count": int(df.head()["cnt"]),
+            "share": float(df.head()["share"]),
         }
+
+    async def calc_column_stat(self, executor: SparkExecutor) -> dict:
+        sql = self.build_script_for_column_stat_collection(col_type=self.col_type)
+
+        df = await executor.execute_select(sql, df_table=self.df_table)
+        if "ERROR" in df.columns:
+            return {
+                "ERROR": df.head()["ERROR"],
+                "col_type": self.col_type,
+                "uniq": 0,
+                "uniq_upper": 0,
+                "top_value": "NULL",
+                "top_freq": 0,
+                "top_share": 0,
+            }
+        return self.convert_df_stat_to_dict(df, col_type=self.col_type)
 
     def build_script_for_column_stat_collection(self, col_type: str = ColumnType.TEXT.value):
         match col_type:
@@ -135,7 +151,7 @@ class TableColumn(Table):
                 ORDER BY 5 DESC
                 LIMIT 1"""
 
-    def convert_df_stat_to_dict(self, df: pd.DataFrame, col_type: str = ColumnType.TEXT.value):
+    def convert_df_stat_to_dict(self, df: DataFrame, col_type: str = ColumnType.TEXT.value):
         match col_type:
             case ColumnType.NUMERIC.value:
                 return self.convert_df_with_numeric_stat_to_dict(df)
@@ -145,46 +161,46 @@ class TableColumn(Table):
                 return self.convert_df_with_text_stat_to_dict(df)
 
     @staticmethod
-    def convert_df_with_numeric_stat_to_dict(df) -> dict:
+    def convert_df_with_numeric_stat_to_dict(df: DataFrame) -> dict:
         return {
-            "col_type": str(df["col_type"][0]),
-            "uniq": int(df["uniq"][0]),
-            "top_value": str(df["top_value"][0]),
-            "top_freq": int(df["top_freq"][0]),
-            "top_share": float(df["top_share"][0] if df["top_share"][0] else 0),
-            "mean": float(df["mean"][0] if df["mean"][0] else 0),
-            "min": float(df["min"][0] if df["min"][0] else 0),
-            "perc25": float(df["perc25"][0] if df["perc25"][0] else 0),
-            "median": float(df["median"][0] if df["median"][0] else 0),
-            "perc75": float(df["perc75"][0] if df["perc75"][0] else 0),
-            "max": float(df["max"][0] if df["max"][0] else 0),
+            "col_type": str(df.head()["col_type"]),
+            "uniq": int(df.head()["uniq"]),
+            "top_value": str(df.head()["top_value"]),
+            "top_freq": int(df.head()["top_freq"]),
+            "top_share": float(df.head()["top_share"] if df.head()["top_share"] else 0),
+            "mean": float(df.head()["mean"] if df.head()["mean"] else 0),
+            "min": float(df.head()["min"] if df.head()["min"] else 0),
+            "perc25": float(df.head()["perc25"] if df.head()["perc25"] else 0),
+            "median": float(df.head()["median"] if df.head()["median"] else 0),
+            "perc75": float(df.head()["perc75"] if df.head()["perc75"] else 0),
+            "max": float(df.head()["max"] if df.head()["max"] else 0),
         }
 
     @staticmethod
-    def convert_df_with_datetime_stat_to_dict(df) -> dict:
+    def convert_df_with_datetime_stat_to_dict(df: DataFrame) -> dict:
         return {
-            "col_type": str(df["col_type"][0]),
-            "uniq": int(df["uniq"][0]),
-            "top_value": str(df["top_value"][0]),
-            "top_freq": int(df["top_freq"][0]),
-            "top_share": float(df["top_share"][0]),
-            "mean": str(df["mean"][0]),
-            "min": str(df["min"][0]),
-            "perc25": str(df["perc25"][0]),
-            "median": str(df["median"][0]),
-            "perc75": str(df["perc75"][0]),
-            "max": str(df["max"][0]),
+            "col_type": str(df.head()["col_type"]),
+            "uniq": int(df.head()["uniq"]),
+            "top_value": str(df.head()["top_value"]),
+            "top_freq": int(df.head()["top_freq"]),
+            "top_share": float(df.head()["top_share"]),
+            "mean": str(df.head()["mean"]),
+            "min": str(df.head()["min"]),
+            "perc25": str(df.head()["perc25"]),
+            "median": str(df.head()["median"]),
+            "perc75": str(df.head()["perc75"]),
+            "max": str(df.head()["max"]),
         }
 
     @staticmethod
-    def convert_df_with_text_stat_to_dict(df) -> dict:
+    def convert_df_with_text_stat_to_dict(df: DataFrame) -> dict:
         return {
-            "col_type": str(df["col_type"][0]),
-            "uniq": int(df["uniq"][0]),
-            "uniq_upper": int(df["uniq_upper"][0]),
-            "top_value": str(df["top_value"][0]),
-            "top_freq": int(df["top_freq"][0]),
-            "top_share": float(df["top_share"][0]),
+            "col_type": str(df.head()["col_type"]),
+            "uniq": int(df.head()["uniq"]),
+            "uniq_upper": int(df.head()["uniq_upper"]),
+            "top_value": str(df.head()["top_value"]),
+            "top_freq": int(df.head()["top_freq"]),
+            "top_share": float(df.head()["top_share"]),
         }
 
 
@@ -199,16 +215,18 @@ class SNFTable(Table):
                 FROM {self.schema}.{self.name}"""
         df = await executor.execute_select(sql)
         if "cnt" not in df.columns:
+            print(df.head())
             return {
-                "ERROR": str(df[0][0]),
-                "STATEMENT_WAS_TIRED_TO_EXECUTE": str(df[0][1]),
+                "ERROR": str(df.head()[0]),
+                "STATEMENT_WAS_TIRED_TO_EXECUTE": str(df.head()[1]),
             }
-        elif df["cnt"][0] == 0:
+        elif df.head()["cnt"] == 0:
             return {
+                "TABLE_NAME": self.name,
                 "ERROR": "EMPTY_TABLE",
             }
         return {
-            "TABLE_COUNT": int(df["cnt"][0]),
+            "TABLE_COUNT": int(df.head()["cnt"]),
         }
 
     async def get_columns_list(self, executor: SnowflakeExecutor) -> list[str] | None:
@@ -224,7 +242,7 @@ class SNFTable(Table):
         FROM tmp
         order by ORDINAL_POSITION"""
         df = await executor.execute_select(sql)
-        return df["table_columns"][0].split(",")
+        return df.head()["table_columns"].split(",")
 
 
 class SNFTableColumn(TableColumn):
@@ -261,7 +279,17 @@ class SNFTableColumn(TableColumn):
                     END;
                     $$;"""
         df = await executor.execute_select(sql)
-        return self.convert_df_stat_to_dict(df, df["col_type"][0])
+        if "error" in df.columns:
+            return {
+                "ERROR": df.head()["error"],
+                "col_type": self.col_type,
+                "uniq": 0,
+                "uniq_upper": 0,
+                "top_value": "NULL",
+                "top_freq": 0,
+                "top_share": 0,
+            }
+        return self.convert_df_stat_to_dict(df, df.head()["col_type"])
 
     def build_script_for_numeric_column_stat_collection(self) -> str:
         schema = "" if not self.related_schema else self.related_schema + "."
@@ -335,33 +363,3 @@ class SNFTableColumn(TableColumn):
                 GROUP BY {self.column_name}
                 ORDER BY 5 DESC
                 LIMIT 1"""
-
-
-class CSVTableColumn(TableColumn):
-    def __init__(self,
-                 configured_table_name: str,
-                 column_name: str,
-                 df_table: pd.DataFrame,
-                 col_type: str = ColumnType.TEXT.value):
-        super().__init__(schema="",
-                         table_name="df_table",
-                         column_name=column_name,
-                         col_type=col_type,
-                         df_table=df_table,
-                         configured_table_name=configured_table_name)
-
-    async def calc_column_stat(self, executor: CSVExecutor) -> dict:
-        sql = self.build_script_for_column_stat_collection(col_type=self.col_type)
-
-        df = await executor.execute_select(sql, df_table=self.df_table)
-        if "ERROR" in df.columns:
-            return {
-                "ERROR": df["ERROR"][0],
-                "col_type": self.col_type,
-                "uniq": 0,
-                "uniq_upper": 0,
-                "top_value": "NULL",
-                "top_freq": 0,
-                "top_share": 0,
-            }
-        return self.convert_df_stat_to_dict(df, col_type=self.col_type)
